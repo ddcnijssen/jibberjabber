@@ -1,0 +1,31 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+using namespace std;
+
+int main(){
+
+ ifstream invoer;
+ char kar, onthoud;
+ int getal = 0;
+ 
+ invoer.open ("invoer.txt");  
+ 
+ kar = invoer.get ();
+ while ( ! invoer.eof ()) {
+  if (kar >= '0' && kar <= '9') {
+   getal *= 10;
+   getal += kar - '0';
+  }
+  else if(onthoud >= '0' && onthoud <= '9'){
+   cout << getal * getal << endl;
+   getal = 0;
+  }
+  onthoud = kar;
+  kar = invoer.get (); 
+ }
+ 
+ invoer.close ();
+
+ return 0;
+}
