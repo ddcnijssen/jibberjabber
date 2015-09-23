@@ -1,0 +1,45 @@
+Coderen of ontcijferen?
+
+1 of 2 filenames (ontcijferen 1 coderen 2)
+
+ontcijferen, geef k (1-20)
+
+bij coderen wordt k juist getoont.
+
+dit doen met gemakkelijke vragen
+
+
+lees invoer symbool voor symbool en schrijf weg.
+coderen naar uitvoer file, ontcijferen naar console.
+
+
+
+hoeveel klinkers
+na k klinkers eerste symbool = deel boodschap
+
+% klinkers-medeklinkers toggle, teller weer 0
+
+\n zet teller ook op 0, tel weer klinkers
+
+
+
+detecteer getallen in de geheime boodschap
+
+ga na of lychrel?
+
+druk kleinste en grootste getal af
+
+druk gemiddelde af afgerond naar dichtstbijzijnde getal.
+
+alleen gehele + getallen in boodschap
+
+boodschap eindigd niet op een cijfer
+
+naast geprint nummer check hoeveel iteraties tot palindroom of int_max (include <climit>)
+
+voor het laatste bijv: 196(18;overflow)
+
+
+
+voor coderen random karakters genereren.
+als goede moment plaats karakter boodschap.
