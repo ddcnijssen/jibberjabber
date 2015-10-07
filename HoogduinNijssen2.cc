@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <climits>
 using namespace std;
 
 //Vraagt gebruiker of deze een bestand wil coderen of ontcijferen
@@ -20,7 +21,7 @@ void coderenOntcijferen(char & input){
 
 //Print bericht dat de file niet goed geopend is en stop programma
 //naam is de naam van de te openen file
-void nietOpen(string naam) {
+void nietopen(string naam) {
   cout << "Error: file '" << naam << "' niet kunnen openen." << endl;
   exit(1); //programma afsluiten
 }//nietopen
@@ -59,11 +60,11 @@ int setKey(char doel){
     cin >> key;
     if(key < 1 || key > 20){ //key controleren
       cout << "Key moet minstens 1 en maximaal 20 zijn." << endl;
-      exit(1); //programma afsluiten
+      exit(1); //programma afsluiten  
     }//if 20<k<1
   }//if O
-  if(doel == 'C'){ //wanneer gecodeerd wordt
-    key = (rand(time(NULL)) % 19) + 1; //genereert key tussen 1 en 20
+  if(doel == 'C'){ //wanneer gecodeerd wordt    
+    key = (rand() % 19) + 1; //genereert key tussen 1 en 20
     cout << "Deze key wordt gebruikt om uw boodschap te coderen: " 
          << key << endl;
   }//if C
@@ -79,41 +80,156 @@ void eersteKar(char & kar, ifstream & invoer){
   }//if
 }//eerstekar
 
-schrijfweg()
+//verwerkt karakters die niet in de boodschap terecht komen
+void administratie(char kar, bool & klinker, int & ktel){ 
+  if(kar > 96 && kar < 123){
+    if(kar == 97 || kar == 101 || kar == 105 || 
+       kar == 111 || kar == 117 || kar == 121){
+      if(klinker) ktel++;
+    }//klinkers
+    else 
+      if(!klinker) ktel++; //medeklinkers
+  }//kleine letters
+  if(kar == '%'){
+    klinker = !klinker;
+    ktel = 0;    
+  }//%
+  if(kar == 10){
+    klinker = true;
+    ktel = 0;
+  }//\n  
+}//administratie
 
-int soortKar(char kar){
-  if(kar == '%')
-    return 0;
-  if(kar == 10)
-    return 1;  
-  if(kar > 47 && kar < 58)
-    return 2;
-  if(kar > 96 && kar < 123)
-    return 3;
-}//soortKar
-
-verwerkGetal(){
-  
+char genereerkar(bool & klinker, int & ktel){
+  int kar = (rand() % 94);
+  if (kar == 0) 
+    kar = 10;
+  else 
+    kar += 31;
+  administratie(kar, klinker, ktel);
+  return kar;
 }
 
-verwerkLetter(){
-  
+int maakgetal(char kar, int getal){
+  getal *= 10;
+  getal += kar - '0';
+  return getal;
 }
+
+int draaiom(int getal){
+  int tempgetal = getal;
+  int omgedraaid;
+  
+  while(getal != 0){
+    if(INT_MAX / 10 < omgedraaid) //kijken of dit ook anders gechecked kan worden
+      return 0;
+    omgedraaid *= 10;
+    omgedraaid += tempgetal % 10;
+    tempgetal /= 10;
+  }
+  return omgedraaid;
+}//draaiom
+
+void lycheck(int getal){
+  int i = 1;
+  int tempgetal = getal;
+  int omgedraaid = draaiom(getal); 
+   
+  if(getal/10 == 0)
+    return;
+  
+  if(omgedraaid == 0){
+    cout << getal << "(" << i << ";overflow)" << endl;
+    return;
+  }
+  
+  while(tempgetal != omgedraaid){
+    i++;
+    tempgetal += omgedraaid;
+    omgedraaid = draaiom(tempgetal);
+    if(INT_MAX - omgedraaid < tempgetal){
+      cout << getal << "(" << i << ";overflow)" << endl;
+      return;
+    }//if
+  }//while
+  cout << getal << "(" << i << ")" << endl;
+}
+
+void verwerkgetal(int getal, int & max, int & min, int & gem){
+  
+  lycheck(getal);
+  
+  gem += (getal - gem) / telgetal;
+  if(telgetal > 1){
+    if(getal > max)
+      max = getal;
+    else if(getal < min)
+      min = getal;
+  }//if
+  else{
+  max = getal;
+  min = getal;
+  }//else
+}
+
+void ontcijferen(char kar, ifstream & invoer){
+  int ktel;
+  int getal = 0, telgetal = 0;
+  int max = 0, min = 0, gem = 0;
+  bool klinker = true;
+  char prkar;
+  
+  while (! invoer.eof()){     
+    if(ktel == key){
+      cout << kar;
+      ktel = 0;
+      if(kar >= '0' && kar <= '9')
+        getal = maakgetal(kar, getal);
+      else
+        if(prkar >= '0' && prkar <= '9')
+          telgetal++
+          verwerkgetal(getal, max, min, gem);
+    }//if
+    else{
+      administratie(kar, klinker, ktel);
+    }//else
+  prkar = kar;
+  kar = invoer.get();
+  }//while 
+  cout << endl;
+  
+  //lychrel getallen controleren
+  //boodschap eindigd niet op een cijfer
+  //afdrukken grootste kleinste getal en gemiddelde
+}//ontcijferen
+
+void coderen(char kar, ifstream & invoer, ofstream & uitvoer){
+  int ktel;
+  bool klinker = true;
+  
+  while (! invoer.eof()){     
+    if(ktel == key){
+      uitvoer.put(kar);      
+      ktel = 0;
+      prkar = kar;
+      kar = invoer.get();
+    }//if
+    else{
+      uitvoer.put(genereerkar(klinker, ktel));
+    }//else
+  }//while
+}//coderen
 
 int main(){
 
   ifstream invoer;
   ofstream uitvoer;
+  
   char doel;    //Doel waarmee het programma gerund wordt, C of O
                 //C voor Coderen, O voor Ontcijferen
-  char kar;     //Karakter om invoer te lezen en mee te werken 
-  char prkar;   //Vorige karakter        
+  char kar;     //Karakter om invoer te lezen en mee te werken        
   int key;      //Key om mee te Coderen of Ontcijferen
-  int ktel = 0; //Telt aantal klinkers of niet klinkers
-  int soort;    //Om het soort karakter door te geven
-  int n1, n2, n3, n4;
-  int mingetal, maxgetal; //Onthoud grootste en kleinste getal
-  bool klinker = true;    //Telt klinkers of niet klinkers
+  srand(time(NULL)); //seed random
   
   coderenOntcijferen(doel);
   filenames(invoer, uitvoer, doel);
@@ -124,38 +240,11 @@ int main(){
   
   //zet invoer en uitvoer op goede plek
     
-  while (! invoer.eof()){       
-    if(doel == 'C'){
-      schrijfweg(kar, doel);
-      //karakters invoeren bij coderen max 4 cijfers   
-    }//coderen 
-    else{
-      soort = soortKar(kar);
-    
-      switch(soort){
-        case 0:
-          klinker = !klinker;
-        case 1:
-          ktel = 0;
-          break;
-        case 2:
-          verwerkGetal();
-          checkGetal(); //adfasdfasdf
-          break;
-        case 3:
-          verwerkLetter();
-          break;
-      }//switch
-    //ga na lychrel print getal en iteraties
-    //onthoud grootste en kleinste
-    }//ontcijferen
-    prkar = kar;
-    kar = invoer.get ();
-  }//while
+  if(doel == 'O')
+    ontcijferen(kar, invoer);
+  if(doel == 'C')
+    coderen(kar, invoer, uitvoer);
   
-  //boodschap eindigd niet op een cijfer
-  //afdrukken grootste kleinste getal en gemiddelde
-
   invoer.close ();
   uitvoer.close ();
   return 0;
