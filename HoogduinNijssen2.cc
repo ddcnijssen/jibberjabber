@@ -117,40 +117,46 @@ int maakgetal(char kar, int getal){
 }
 
 int draaiom(int getal){
-  int tempgetal = getal;
-  int omgedraaid;
+  int omgedraaid = 0;
   
   while(getal != 0){
-    if(INT_MAX / 10 < omgedraaid) //kijken of dit ook anders gechecked kan worden
-      return 0;
     omgedraaid *= 10;
-    omgedraaid += tempgetal % 10;
-    tempgetal /= 10;
+    omgedraaid += getal % 10;
+    getal /= 10;
   }
   return omgedraaid;
 }//draaiom
 
-void lycheck(int getal){
-  int i = 1;
-  int tempgetal = getal;
-  int omgedraaid = draaiom(getal); 
-   
-  if(getal/10 == 0)
-    return;
-  
-  if(omgedraaid == 0){
-    cout << getal << "(" << i << ";overflow)" << endl;
-    return;
+bool maxcheck(int getal){
+  if(getal / (10 ^ 9) > 0){
+    if(getal % 100 > 0)
+      return true;
+    if(((draaiom(getal / 100)) + (getal % (10 ^ 8))) > (INT_MAX % 10 ^ 8))
+      return true;
   }
   
-  while(tempgetal != omgedraaid){
-    i++;
-    tempgetal += omgedraaid;
-    omgedraaid = draaiom(tempgetal);
-    if(INT_MAX - omgedraaid < tempgetal){
-      cout << getal << "(" << i << ";overflow)" << endl;
+  if(INT_MAX - draaiom(getal) < getal)
+      return true;
+      
+  return false; 
+}
+
+void lycheck(int getal){
+  int i = 0;
+  int tempgetal = getal;
+  
+  if(maxcheck(getal)){
+    cout << getal << "(" << i + 1 << ";overflow)" << endl;
+    return;
+  }
+
+  while(tempgetal != draaiom(tempgetal)){
+    i++;    
+    tempgetal += draaiom(tempgetal);
+    if(maxcheck(tempgetal)){
+      cout << getal << "(" << i + 1 << ";overflow)" << endl;
       return;
-    }//if
+    }    
   }//while
   cout << getal << "(" << i << ")" << endl;
 }
