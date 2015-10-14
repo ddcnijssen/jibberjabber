@@ -1,3 +1,11 @@
+/* Auteurs:  Richard Hoogduin, Desley Nijssen
+ * Functie:  Bestand codeert of ontcijfert geheime boodschappen en gebruikt
+ *           daarvoor een key. Om een bestand te ontcijferen moet een key
+ *           gegeven worden, met coderen wordt een key gegenereert.
+ * Datum:    2015-10-09
+ * compiler: g++
+ */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -35,18 +43,18 @@ void filenames(ifstream & invoer, ofstream & uitvoer, char doel){
     cout << "\nWelk bestand wilt U ontcijferen? bv. 'iets.txt'" << endl;
     cin >> naam;
     invoer.open(naam.c_str());
-    if (! invoer.is_open()) nietopen(naam);
+    if (! invoer.is_open()) nietopen(naam); //bestand niet gevonden
   }//if O
   if(doel == 'C'){ //men wil een boodschap coderen
     cout << "\nWelke boodschap wilt U coderen? bv. 'iets.txt'" << endl;
     cin >> naam;
     invoer.open(naam.c_str());
-    if (! invoer.is_open()) nietopen(naam);
-    cout << "Waar wilt U de gecodeerde boodschap opslaan?"
+    if (! invoer.is_open()) nietopen(naam); //bestand niet gevonden
+    cout << "\nWaar wilt U de gecodeerde boodschap opslaan?"
          << "bv. 'geheim.txt'" << endl;
     cin >> naam;
     uitvoer.open(naam.c_str());
-    if (! uitvoer.is_open()) nietopen(naam);
+    if (! uitvoer.is_open()) nietopen(naam); //bestand niet gevonden
   }//if C 
 }//filenames
 
@@ -83,9 +91,8 @@ void eersteKar(char & kar, ifstream & invoer){
 //verwerkt karakters die niet in de boodschap terecht komen
 void administratie(char kar, bool & klinker, int & ktel){ 
   if(kar > 96 && kar < 123){
-    if(kar == 97 || kar == 101 || kar == 105 || 
-       kar == 111 || kar == 117 || kar == 121){
-      if(klinker) ktel++;
+    if(kar == 97 || kar == 101 || kar == 105 || kar == 111 || kar == 117){
+      if(klinker) ktel++; 
     }//klinkers
     else 
       if(!klinker) ktel++; //medeklinkers
@@ -100,73 +107,81 @@ void administratie(char kar, bool & klinker, int & ktel){
   }//\n  
 }//administratie
 
+//Genereert een random karakter om tussen boodschap karakters te stoppen
 char genereerkar(bool & klinker, int & ktel){
-  int kar = (rand() % 94);
-  if (kar == 0) 
+  int kar = (rand() % 95);//genereer karakters 0 t/m 94
+  if (kar == 0) //karakter 0 wordt 10
     kar = 10;
-  else 
+  else //karakters 1 t/m 94 worden 32 t/m 125 
     kar += 31;
-  administratie(kar, klinker, ktel);
-  return kar;
-}
+  administratie(kar, klinker, ktel);  //kijk of ktel geupdate wordt
+  return kar;                         //of klinkers verandert wordt
+}//genereerkar
 
+//bouwt getal uit cijfers in geheime boodschap
 int maakgetal(char kar, int getal){
   getal *= 10;
   getal += kar - '0';
   return getal;
-}
+}//maakgetal
 
+//draait een getal om
 int draaiom(int getal){
-  int omgedraaid = 0;
+  int omgedraaid = 0; //wordt opgebouwt tot omgekeerde van getal
   
   while(getal != 0){
     omgedraaid *= 10;
     omgedraaid += getal % 10;
     getal /= 10;
-  }
+  }//while
   return omgedraaid;
 }//draaiom
 
+//checkt of het omgedraaide getal > INT_MAX
+//wanneer dit niet het geval is checkt hij of getal + het omgedraaide
+//getal > INT_MAX
 bool maxcheck(int getal){
-  if(getal / (10 ^ 9) > 0){
+  int groot = 100000000; //een groot getal: 10^8
+  if(getal / (groot * 10) > 0){
     if(getal % 100 > 0)
-      return true;
-    if(((draaiom(getal / 100)) + (getal % (10 ^ 8))) > (INT_MAX % 10 ^ 8))
-      return true;
-  }
-  
+      return true; //omgedraaide getal is groter dan INT_MAX
+    if(((draaiom(getal / 100)) + (getal % groot)) > (INT_MAX % groot))
+      return true; //omgedraaide getal is groter dan INT_MAX
+  }//if getal >= 10^9
   if(INT_MAX - draaiom(getal) < getal)
-      return true;
-      
-  return false; 
-}
+    return true; //getal + omgedraaid getal is groter dan INT_MAX     
+  return false; //getal + omgedraaid getal is niet groter dan INT_MAX
+}//maxcheck
 
+//checkt of het getal geen lychrel getal is
 void lycheck(int getal){
-  int i = 0;
-  int tempgetal = getal;
+  int i = 0; //iteraties
   
-  if(maxcheck(getal)){
-    cout << getal << "(" << i + 1 << ";overflow)" << endl;
+  if(maxcheck(getal)){ //overflow na een iteratie
+    cout << "(" << i + 1 << ";overflow)";
     return;
-  }
+  }//if
 
-  while(tempgetal != draaiom(tempgetal)){
-    i++;    
-    tempgetal += draaiom(tempgetal);
-    if(maxcheck(tempgetal)){
-      cout << getal << "(" << i + 1 << ";overflow)" << endl;
+  while(getal != draaiom(getal)){
+    i++; //houd aantal iteraties bij   
+    getal += draaiom(getal);
+    if(maxcheck(getal)){ //overflow na volgende iteratie
+      cout << "(" << i + 1 << ";overflow)";
       return;
     }    
   }//while
-  cout << getal << "(" << i << ")" << endl;
-}
+  cout << "(" << i << ")";
+}//lycheck
 
-void verwerkgetal(int getal, int & max, int & min, int & gem){
+//verwerkt een getal, gevonden in de geheime boodschap
+//bepaalt of het hoger is dan het maximum, lager dan het minimum
+//een mogelijk lychrel getal en het gemiddelde van alle getallen
+void verwerkgetal(int getal, int & max, int & min, double & gem, int tel){
   
   lycheck(getal);
   
-  gem += (getal - gem) / telgetal;
-  if(telgetal > 1){
+  gem += (double)(getal - gem) / tel;
+  if(tel > 1){
     if(getal > max)
       max = getal;
     else if(getal < min)
@@ -176,82 +191,125 @@ void verwerkgetal(int getal, int & max, int & min, int & gem){
   max = getal;
   min = getal;
   }//else
-}
+}//verwerk getal
 
-void ontcijferen(char kar, ifstream & invoer){
-  int ktel;
-  int getal = 0, telgetal = 0;
-  int max = 0, min = 0, gem = 0;
-  bool klinker = true;
-  char prkar;
+//Ontcijferd een boodschap
+void ontcijferen(char kar, int key, ifstream & invoer){
+  int ktel = 0;           //houdt aantal getelde (mede)klinkers bij
+  int getal = 0;          //getal wordt opgebouwd uit losse cijfers
+  int telgetal = 0;       //telt aantal getallin in boodschap
+  int max = 0, min = 0;   //grootste en kleinste getal in boodschap
+  double gem = 0;         //gemiddelde alle getallen in boodschap
+  bool klinker = true;    //zoek naar klinkers of medeklinkers
+  char prkar;             //vorige karakter in boodschap
   
   while (! invoer.eof()){     
-    if(ktel == key){
-      cout << kar;
-      ktel = 0;
-      if(kar >= '0' && kar <= '9')
+    if(ktel == key){ //dit karakter hoort in de boodschap     
+      if(kar >= '0' && kar <= '9') //is een cijfer
         getal = maakgetal(kar, getal);
-      else
-        if(prkar >= '0' && prkar <= '9')
-          telgetal++
-          verwerkgetal(getal, max, min, gem);
+      else //is geen cijfer
+        if(prkar >= '0' && prkar <= '9'){ //einde getal
+          telgetal++;
+          verwerkgetal(getal, max, min, gem, telgetal);
+          getal = 0;
+        }//if
+      ktel = 0;
+      cout << kar;
+      prkar = kar;                 
     }//if
-    else{
+    else{ //dit karakter hoort niet in de boodschap
       administratie(kar, klinker, ktel);
-    }//else
-  prkar = kar;
-  kar = invoer.get();
+    }//else  
+  kar = invoer.get();  
   }//while 
   cout << endl;
   
-  //lychrel getallen controleren
-  //boodschap eindigd niet op een cijfer
-  //afdrukken grootste kleinste getal en gemiddelde
+  cout << "Kleinste getal in boodschap: " << min << endl
+       << "Gemiddelde van alle getallen: " << (int)((gem + 0.5)/1) << endl
+       << "Grootste getal in boodschap: " << max << endl;
 }//ontcijferen
 
-void coderen(char kar, ifstream & invoer, ofstream & uitvoer){
-  int ktel;
-  bool klinker = true;
+//codeert een geheime boodschap
+void coderen(char kar, int key, ifstream & invoer, ofstream & uitvoer){
+  int ktel = 0;         //houdt aantal getelde (mede)klinkers bij
+  bool klinker = true;  //zoek naar klinkers of medeklinkers
   
   while (! invoer.eof()){     
-    if(ktel == key){
+    if(ktel == key){ //stop een karakter uit de boodschap in de output
       uitvoer.put(kar);      
       ktel = 0;
-      prkar = kar;
       kar = invoer.get();
     }//if
-    else{
+    else{ //genereer een random karaktar voor de output
       uitvoer.put(genereerkar(klinker, ktel));
     }//else
   }//while
 }//coderen
 
-int main(){
+//maakt lijn van infoblok af
+void infolijn(int karakters){
+  int i;
+  for(i = karakters; i < 74; i++)
+    cout << ' ';
+  cout << '*' << endl;
+}//infolijn
 
-  ifstream invoer;
-  ofstream uitvoer;
+//print infoblok
+void infoblok(){
+  int i;
+  for(i = 0; i < 75; i++)
+    cout << '*'; 
+     
+  cout << endl
+       << "* Programma door Richard Hoogduin en Desley Nijssen";
+  infolijn(51); //vult lijn en break
+  cout << "* Beide begonnen met Informatica in 2015";
+  infolijn(40); //vult lijn en break      
+  cout << "* Geprogrammeerd op 2015-10-09";
+  infolijn(30); //vult lijn en break
+  cout << "* ";
+  infolijn(2);  //vult lijn en break
+  cout << "* Dit is programmeer opgave 2";
+  infolijn(29); //vult lijn en break
+  cout << "* Er wordt gevraagd of U een boodschap wilt coderen of"
+       << " ontcijferen";
+  infolijn(66); //vult lijn en break
+  cout << "* Als U wilt ontcijferen wordt er een bestand naam en een"
+       << " key gevraagt";
+  infolijn(70); //vult lijn en break
+  cout << "* Als U wilt coderen twee bestand namen en wordt Uw key"
+       << " gegenereert";
+  infolijn(67); //vult lijn en break
+    
+  for(i = 0; i < 75; i++)
+    cout << '*';
+  cout << endl;       
+}//infoblok
+
+int main(){
+  infoblok();
   
-  char doel;    //Doel waarmee het programma gerund wordt, C of O
-                //C voor Coderen, O voor Ontcijferen
-  char kar;     //Karakter om invoer te lezen en mee te werken        
-  int key;      //Key om mee te Coderen of Ontcijferen
+  ifstream invoer;   //bestand voor input
+  ofstream uitvoer;  //bestand voor output
+  char doel;         //Doel waarmee het programma gerund wordt, C of O
+                     //C voor Coderen, O voor Ontcijferen
+  char kar;          //Karakter om invoer te lezen en mee te werken        
+  int key;           //Key om mee te Coderen of Ontcijferen
   srand(time(NULL)); //seed random
   
-  coderenOntcijferen(doel);
-  filenames(invoer, uitvoer, doel);
+  coderenOntcijferen(doel);         //bestand coderen of ontcijferen?
+  filenames(invoer, uitvoer, doel); //namen van te gebruiken bestanden
   
-  key = setKey(doel);
+  key = setKey(doel);               //wat is de key
   
-  eersteKar(kar, invoer);
+  eersteKar(kar, invoer);           //pak het eerste karakter
   
-  //zet invoer en uitvoer op goede plek
-    
-  if(doel == 'O')
-    ontcijferen(kar, invoer);
-  if(doel == 'C')
-    coderen(kar, invoer, uitvoer);
+  if(doel == 'O')   //ontcijfer het gegeven bestand
+    ontcijferen(kar, key, invoer);
+  if(doel == 'C')   //codeer het gegeven bestand
+    coderen(kar, key, invoer, uitvoer);
   
-  invoer.close ();
-  uitvoer.close ();
+  invoer.close ();  //sluit invoer
+  uitvoer.close (); //sluit uitvoer
   return 0;
-}
+}//main
